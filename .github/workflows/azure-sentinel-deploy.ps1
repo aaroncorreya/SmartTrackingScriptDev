@@ -49,9 +49,11 @@ $header = @{
 
 #Gets all files and commit shas using Get Trees API 
 function GetGithubTree {
-    $branchResponse = Invoke-RestMethod https://api.github.com/repos/$githubRepository/branches/$branchName -Headers $header
+    # $branchResponse = Invoke-RestMethod https://api.github.com/repos/$githubRepository/branches/$branchName -Headers $header
+    $branchResponse = AttemptInvokeRestMethod "Get" "https://api.github.com/repos/$githubRepository/branches/$branchName" $null $null 3
     $treeUrl = "https://api.github.com/repos/$githubRepository/git/trees/" + $branchResponse.commit.sha + "?recursive=true"
-    $getTreeResponse = Invoke-RestMethod $treeUrl -Headers $header
+    # $getTreeResponse = Invoke-RestMethod $treeUrl -Headers $header
+    $getTreeResponse = AttemptInvokeRestMethod "Get" $treeUrl $null $null 3
     return $getTreeResponse
 }
 
@@ -87,7 +89,7 @@ function PushCsvToRepo($getTreeResponse) {
         content = $encodedContent
         branch = $branchName
         sha = $sha
-    }
+    } | ConvertTo-Json
 
     $Parameters = @{
         Method      = "PUT"
@@ -95,7 +97,8 @@ function PushCsvToRepo($getTreeResponse) {
         Headers     = $header
         Body        = $body | ConvertTo-Json
     }
-    Invoke-RestMethod @Parameters
+    # Invoke-RestMethod @Parameters
+    AttemptInvokeRestMethod "Put" $createFileUrl $body $null 3
 }
 
 function ReadCsvToTable {
