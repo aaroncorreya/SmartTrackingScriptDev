@@ -64,7 +64,7 @@ function GetCommitShaTable($getTreeResponse) {
 #Pushes new/updated csv file to the user's repository. If updating file, will need csv commit sha. 
 #TODO: Add source control id to tracking_table name.
 function PushCsvToRepo($getTreeResponse) {
-    $path = ".github/workflows/tracking_table_$sourceControlId.csv"
+    $path = ".github/workflows/.sentinel/tracking_table_$sourceControlId.csv"
     Write-Output $path
     $sha = GetCsvCommitSha $getTreeResponse
     #$sha = "70c379b63ffa0795fdbfbc128e5a2818397b7ef8"
