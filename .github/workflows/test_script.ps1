@@ -37,7 +37,8 @@ function GetGithubTree {
     # $branchResponse = Invoke-RestMethod https://api.github.com/repos/$githubRepository/branches/$branchName -Headers $header
     $branchResponse = AttemptInvokeRestMethod "Get" "https://api.github.com/repos/$githubRepository/branches/$branchName" $null $null 3
     $treeUrl = "https://api.github.com/repos/$githubRepository/git/trees/" + $branchResponse.commit.sha + "?recursive=true"
-    $getTreeResponse = Invoke-RestMethod $treeUrl -Headers $header
+    # $getTreeResponse = Invoke-RestMethod $treeUrl -Headers $header
+    $getTreeResponse = AttemptInvokeRestMethod "Get" $treeUrl $null $null 3
     return $getTreeResponse
 }
 
