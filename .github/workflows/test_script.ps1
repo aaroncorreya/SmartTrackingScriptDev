@@ -42,7 +42,8 @@ function GetGithubTree {
 
 #Gets blob commit sha of the csv file, used when updating csv file to repo 
 function GetCsvCommitSha($getTreeResponse) {
-    return $getTreeResponse.tree |  Where-Object { $_.path -eq ".github/workflows/.sentinel/tracking_table_$sourceControlId.csv" }
+    $shaObject = $getTreeResponse.tree |  Where-Object { $_.path -eq ".github/workflows/.sentinel/tracking_table_$sourceControlId.csv" }
+    return $shaObject.sha
 }
 
 #Creates a table using the reponse from the tree api, creates a table 
@@ -105,7 +106,7 @@ function main {
 $tree = GetGithubTree 
 Write-Output $tree
 $sha = GetCsvCommitSha $tree
-Write-Output $sha.sha
+Write-Output $sha
 # $shaTable = GetCommitShaTable $tree
 # Write-Output $shaTable
 # $sha = GetCsvCommitSha $tree
