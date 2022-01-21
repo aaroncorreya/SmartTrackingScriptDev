@@ -117,6 +117,30 @@ function CleanDeletedFilesFromTable {
     }
 }
 
+function AttemptInvokeRestMethod($method, $url, $body, $contentTypes, $maxRetries) {
+    $Stoploop = $false
+    $retryCount = 0
+    do {
+        try {
+            $result = Invoke-RestMethod -Uri $url -Method $method -Headers $header -Body $body -ContentType $contentTypes
+            $Stoploop = $true
+        }
+        catch {
+            if ($retryCount -gt $maxRetries) {
+                Write-Host "[Error] API call failed after $retryCount retries: $_"
+                $Stoploop = $true
+            }
+            else {
+                Write-Host "[Warning] API call failed: $_.`n Conducting retry #$retryCount."
+                Start-Sleep -Seconds 5
+                $retryCount = $retryCount + 1
+            }
+        }
+    }
+    While ($Stoploop -eq $false)
+    return $result
+}
+
 function AttemptAzLogin($psCredential, $tenantId, $cloudEnv) {
     $maxLoginRetries = 3
     $delayInSeconds = 30

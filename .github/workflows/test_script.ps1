@@ -34,7 +34,8 @@ function ConvertTableToString {
 
 #Gets all files and commit shas using Get Trees API 
 function GetGithubTree {
-    $branchResponse = Invoke-RestMethod https://api.github.com/repos/$githubRepository/branches/$branchName -Headers $header
+    # $branchResponse = Invoke-RestMethod https://api.github.com/repos/$githubRepository/branches/$branchName -Headers $header
+    $branchResponse = AttemptInvokeRestMethod "Get" "https://api.github.com/repos/$githubRepository/branches/$branchName" $null $null 3
     $treeUrl = "https://api.github.com/repos/$githubRepository/git/trees/" + $branchResponse.commit.sha + "?recursive=true"
     $getTreeResponse = Invoke-RestMethod $treeUrl -Headers $header
     return $getTreeResponse
@@ -101,10 +102,34 @@ function main {
     Write-Output $shaTable
 }
 
-main
+function AttemptInvokeRestMethod($method, $url, $body, $contentTypes, $maxRetries) {
+    $Stoploop = $false
+    $retryCount = 0
+    do {
+        try {
+            $result = Invoke-RestMethod -Uri $url -Method $method -Headers $header -Body $body -ContentType $contentTypes
+            $Stoploop = $true
+        }
+        catch {
+            if ($retryCount -gt $maxRetries) {
+                Write-Host "[Error] API call failed after $retryCount retries: $_"
+                $Stoploop = $true
+            }
+            else {
+                Write-Host "[Warning] API call failed: $_.`n Conducting retry #$retryCount."
+                Start-Sleep -Seconds 5
+                $retryCount = $retryCount + 1
+            }
+        }
+    }
+    While ($Stoploop -eq $false)
+    return $result
+}
+
+# main
 # $shaTable = @{}
-# $tree = GetGithubTree 
-# Write-Output $tree
+$tree = GetGithubTree 
+Write-Output $tree
 # $sha = GetCsvCommitSha $tree
 # Write-Output $sha
 # $shaTable = GetCommitShaTable $tree
