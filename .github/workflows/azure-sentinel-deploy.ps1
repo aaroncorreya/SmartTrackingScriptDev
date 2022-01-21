@@ -19,7 +19,7 @@ $githubAuthToken = $Env:githubAuthToken
 $githubRepository = $Env:GITHUB_REPOSITORY
 $branchName = $Env:branch
 $manualDeployment = $Env:manualDeployment
-$csvPath = ".github\workflows\tracking_table_$sourceControlId.csv"
+$csvPath = ".github\workflows\.sentinel\tracking_table_$sourceControlId.csv"
 $global:localCsvTablefinal = @{}
 
 if ([string]::IsNullOrEmpty($contentTypes)) {
@@ -61,14 +61,8 @@ function GetGithubTree {
 # }
 
 function GetCsvCommitSha($getTreeResponse) {
-    $sha = $null
-    $getTreeResponse.tree | ForEach-Object {
-        if ($_.path -eq ".github/workflows/tracking_table_$sourceControlId.csv") {
-            $sha = $_.sha 
-        }
-    }  
-    return $sha
-    # Where-Object { $_.path -eq ".github/workflows/tracking_table_$sourceControlId.csv" }
+    $shaObject = $getTreeResponse.tree | Where-Object { $_.path -eq ".github/workflows/.sentinel/tracking_table_$sourceControlId.csv" }
+    return $shaObject.sha
 }
 
 #Creates a table using the reponse from the tree api, creates a table 
@@ -86,7 +80,7 @@ function GetCommitShaTable($getTreeResponse) {
 
 #Pushes new/updated csv file to the user's repository. If updating file, will need csv commit sha. 
 function PushCsvToRepo($getTreeResponse) {
-    $path = ".github/workflows/tracking_table_$sourceControlId.csv"
+    $path = ".github/workflows/.sentinel/tracking_table_$sourceControlId.csv"
     $sha = GetCsvCommitSha $getTreeResponse
     $createFileUrl = "https://api.github.com/repos/$githubRepository/contents/$path"
     $content = ConvertTableToString
