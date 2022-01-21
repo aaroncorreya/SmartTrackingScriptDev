@@ -5,7 +5,7 @@ $branchName = $refName.Replace("refs/heads/", "")
 #$branchName = $Env:branch
 $workspace = $Env:GITHUB_WORKSPACE + "\"
 $sourceControlId = $Env:sourceControlId 
-$csvPath = ".github\workflows\tracking_table_$sourceControlId.csv"
+$csvPath = ".github\workflows\.sentinel\tracking_table_$sourceControlId.csv"
 $global:localCsvTablefinal = @{}
 
 $header = @{
@@ -100,12 +100,12 @@ function main {
     Write-Output $shaTable
 }
 
-# main
-$shaTable = @{}
-$tree = GetGithubTree 
-Write-Output $tree
-$shaTable = GetCommitShaTable $tree
-Write-Output $shaTable
-$sha = GetCsvCommitSha $tree
-Write-Output $sha
+main
+# $shaTable = @{}
+# $tree = GetGithubTree 
+# Write-Output $tree
+# $shaTable = GetCommitShaTable $tree
+# Write-Output $shaTable
+# $sha = GetCsvCommitSha $tree
+# Write-Output $sha
 
