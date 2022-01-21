@@ -81,7 +81,7 @@ function PushCsvToRepo($getTreeResponse) {
         content = $encodedContent
         branch = $branchName
         sha = $sha
-    }
+    } | ConvertTo-Json
 
     $Parameters = @{
         Method      = "PUT"
@@ -90,7 +90,8 @@ function PushCsvToRepo($getTreeResponse) {
         Body        = $body | ConvertTo-Json
     }
     Write-Output $Parameters | Out-String
-    Invoke-RestMethod @Parameters
+    # Invoke-RestMethod @Parameters
+    AttemptInvokeRestMethod "Put" $createFileUrl $body $null 3
 }
 
 function main {
@@ -127,10 +128,10 @@ function AttemptInvokeRestMethod($method, $url, $body, $contentTypes, $maxRetrie
     return $result
 }
 
-# main
+main
 # $shaTable = @{}
-$tree = GetGithubTree 
-Write-Output $tree
+# $tree = GetGithubTree 
+# Write-Output $tree
 # $sha = GetCsvCommitSha $tree
 # Write-Output $sha
 # $shaTable = GetCommitShaTable $tree
