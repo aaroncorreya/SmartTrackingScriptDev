@@ -104,6 +104,8 @@ function main {
 # $shaTable = @{}
 $tree = GetGithubTree 
 Write-Output $tree
+$sha = GetCsvCommitSha $tree
+Write-Output $sha
 # $shaTable = GetCommitShaTable $tree
 # Write-Output $shaTable
 # $sha = GetCsvCommitSha $tree
