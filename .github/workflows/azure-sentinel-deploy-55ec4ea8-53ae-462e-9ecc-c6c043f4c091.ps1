@@ -36,7 +36,7 @@ if ([string]::IsNullOrEmpty($contentTypes)) {
     $contentTypes = "AnalyticsRule"
 }
 
-$metadataFilePath = $Directory + "\" + ".github\workflows\.sentinel\metadata.json"
+$metadataFilePath = ".github\workflows\.sentinel\metadata.json"
 @"
 {
     "`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
