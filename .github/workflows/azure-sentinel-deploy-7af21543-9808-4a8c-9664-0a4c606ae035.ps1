@@ -12,7 +12,6 @@ $contentTypeMapping = @{
     "Parser"=@("Microsoft.OperationalInsights/workspaces/savedSearches");
     "Playbook"=@("Microsoft.Web/connections", "Microsoft.Logic/workflows", "Microsoft.Web/customApis");
     "Workbook"=@("Microsoft.Insights/workbooks");
-    "Metadata"=@("Microsoft.OperationalInsights/workspaces/providers/metadata");
 }
 $sourceControlId = $Env:sourceControlId 
 $githubAuthToken = $Env:githubAuthToken
@@ -22,13 +21,60 @@ $manualDeployment = $Env:manualDeployment
 $csvPath = ".github\workflows\.sentinel\tracking_table_$sourceControlId.csv"
 $global:localCsvTablefinal = @{}
 
-if ([string]::IsNullOrEmpty($contentTypes)) {
-    $contentTypes = "AnalyticsRule,Metadata"
+$guidPattern = '(\b[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b)'
+$namePattern = '([-\w\._\(\)]+)'
+$sentinelResourcePatterns = @{
+    "AnalyticsRule" = "/subscriptions/$guidPattern/resourceGroups/$namePattern/providers/Microsoft.OperationalInsights/workspaces/$namePattern/providers/Microsoft.SecurityInsights/alertRules/$namePattern"
+    "AutomationRule" = "/subscriptions/$guidPattern/resourceGroups/$namePattern/providers/Microsoft.OperationalInsights/workspaces/$namePattern/providers/Microsoft.SecurityInsights/automationRules/$namePattern"
+    "HuntingQuery" = "/subscriptions/$guidPattern/resourceGroups/$namePattern/providers/Microsoft.OperationalInsights/workspaces/$namePattern/savedSearches/$namePattern"
+    "Parser" = "/subscriptions/$guidPattern/resourceGroups/$namePattern/providers/Microsoft.OperationalInsights/workspaces/$namePattern/savedSearches/$namePattern"
+    "Playbook" = "/subscriptions/$guidPattern/resourceGroups/$namePattern/providers/Microsoft.Logic/workflows/$namePattern"
+    "Workbook" = "/subscriptions/$guidPattern/resourceGroups/$namePattern/providers/Microsoft.Insights/workbooks/$namePattern"
 }
 
-if (-not ($contentTypes.contains("Metadata"))) {
-    $contentTypes += ",Metadata"
+if ([string]::IsNullOrEmpty($contentTypes)) {
+    $contentTypes = "AnalyticsRule"
 }
+
+$metadataFilePath = "metadata.json"
+@"
+{
+    "`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "parentResourceId": {
+            "type": "string"
+        },
+        "kind": {
+            "type": "string"
+        },
+        "sourceControlId": {
+            "type": "string"
+        },
+        "workspace": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "metadataName": "[guid(parameters('parentResourceId'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.OperationalInsights/workspaces/providers/metadata",
+            "apiVersion": "2022-01-01-preview",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/',variables('metadataName'))]",
+            "properties": {
+                "parentId": "[parameters('parentResourceId')]",
+                "kind": "[parameters('kind')]",
+                "source": {
+                    "kind": "SourceRepository",
+                    "sourceId": "[parameters('sourceControlId')]"
+                }
+            }
+        }
+    ]
+}
+"@ | Out-File -FilePath $metadataFilePath 
 
 $resourceTypes = $contentTypes.Split(",") | ForEach-Object { $contentTypeMapping[$_] } | ForEach-Object { $_.ToLower() }
 $MaxRetries = 3
@@ -187,6 +233,53 @@ function ConnectAzCloud {
     Set-AzContext -Tenant $RawCreds.tenantId | out-null;
 }
 
+function AttemptDeployMetadata($deploymentName, $resourceGroupName, $templateObject) {
+    $deploymentInfo = $null
+    try {
+        $deploymentInfo = Get-AzResourceGroupDeploymentOperation -DeploymentName $deploymentName -ResourceGroupName $ResourceGroupName -ErrorAction Ignore
+    }
+    catch {
+        Write-Host "[Warning] Unable to fetch deployment info for $deploymentName, no metadata was created for the resources in the file. Error: $_"
+        return
+    }
+    $deploymentInfo | Where-Object { $_.TargetResource -ne "" } | ForEach-Object {
+        $resource = $_.TargetResource
+        $sentinelContentKinds = GetContentKinds $resource
+        if ($sentinelContentKinds.Count -gt 0) {
+            $contentKind = ToContentKind $sentinelContentKinds $resource $templateObject
+            try {
+                New-AzResourceGroupDeployment -Name "md-$deploymentName" -ResourceGroupName $ResourceGroupName -TemplateFile $metadataFilePath `
+                    -parentResourceId $resource `
+                    -kind $contentKind `
+                    -sourceControlId $sourceControlId `
+                    -workspace $workspaceName `
+                    -ErrorAction Stop | Out-Host
+                Write-Host "[Info] Created metadata metadata for $contentKind with parent resource id $resource"
+            }
+            catch {
+                Write-Host "[Warning] Failed to deploy metadata for $contentKind with parent resource id $resource with error $_"
+            }
+        }
+    }
+}
+
+function GetContentKinds($resource) {
+    return $sentinelResourcePatterns.Keys | Where-Object { $resource -match $sentinelResourcePatterns[$_] }
+}
+
+function ToContentKind($contentKinds, $resource, $templateObject) {
+    if ($contentKinds.Count -eq 1) {
+       return $contentKinds 
+    }
+    if ($null -ne $resource -and $resource.Contains('savedSearches')) {
+       if ($templateObject.resources.properties.Category -eq "Hunting Queries") {
+           return "HuntingQuery"
+       }
+       return "Parser"
+    }
+    return $null
+}
+
 function IsValidTemplate($path, $templateObject) {
     Try {
         if (DoesContainWorkspaceParam $templateObject) {
@@ -255,7 +348,8 @@ function AttemptDeployment($path, $deploymentName, $templateObject) {
             {
                 New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $ResourceGroupName -TemplateFile $path -ErrorAction Stop | Out-Host
             }
-            
+            AttemptDeployMetadata $deploymentName $ResourceGroupName $templateObject
+
             $isSuccess = $true
         }
         Catch [Exception] 
