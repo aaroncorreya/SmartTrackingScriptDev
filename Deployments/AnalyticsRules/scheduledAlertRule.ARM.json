@@ -11,7 +11,7 @@
             "minLength": 1,
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
-                "description": "Resource group to deploy solution resources"
+                "description": "Resource group to deploy solution resources updated"
             }
         },
         "workspace": {
