@@ -1,0 +1,58 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "variables": {
+        "ruleId": "8ee9c64a-fc2c-4410-be34-cba0e47aabf0",
+        "ruleDisplayName": "Denied Connections"
+    },
+    "parameters": {
+        "location": {
+            "type": "string",
+            "minLength": 1,
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Resource group to deploy solution resources"
+            }
+        },
+        "workspace": {
+            "type": "string",
+            "metadata": {
+                "description": "Workspace name for Log Analytics where Sentinel is setup"
+            }
+        }
+    },
+    "functions": [],
+    "resources": [
+        {
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/',variables('ruleId'))]",
+            "apiVersion": "2020-01-01",
+            "kind": "Scheduled",
+            "location": "[parameters('location')]",
+            "dependsOn": [],
+            "properties": {
+                "description": "MPO rule description",
+                "displayName": "[variables('ruleDisplayName')]",
+                "enabled": false,
+                "query": "SecurityAlert | take 10",
+                "queryFrequency": "PT1H",
+                "queryPeriod": "P2DT1H30M",
+                "severity": "Medium",
+                "suppressionDuration": "PT1H",
+                "suppressionEnabled": true,
+                "tactics": [ "InitialAccess", "Persistence" ],
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0
+                // Optional fields:
+                //"alertRuleTemplateName": "Source template ID",  
+                //"Etag": "*" // needed when upgrading
+            }
+        }
+    ],
+    "outputs": {
+        "ruleId": {
+            "type": "string",
+            "value": "[variables('ruleId')]"
+        }
+    }
+}
