@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/f740a0e2-386b-4470-8b13-284d2ee5dce5')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/f740a0e2-386b-4470-8b13-284d2ee5dce5')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2022-09-01-preview",
+      "properties": {
+        "queryFrequency": "PT5H",
+        "queryPeriod": "PT5H",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "severity": "Medium",
+        "query": "let mediumRisk = 2;\nlet goverence = 'Goverence Information';\nCognniIncidents_CL \n| where Severity == mediumRisk\n| where informationType_s == goverence\n| where TimeGenerated >= ago(5h)\n| extend AccountCustomEntity = userId_s\n",
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5M",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "entityMappings": [
+          {
+            "entityType": "Account",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "AccountCustomEntity"
+              }
+            ]
+          }
+        ],
+        "tactics": [
+          "Collection"
+        ],
+        "techniques": null,
+        "displayName": "Cognni Incidents for Medium Sensitivity Governance Information",
+        "enabled": false,
+        "description": "Display incidents in which medium sensitivity governance information was placed at risk by user sharing.",
+        "alertRuleTemplateName": "c1d4a005-e220-4d06-9e53-7326a22b8fe4",
+        "lastModifiedUtc": "2022-07-07T18:04:10.6389581Z"
+      }
+    }
+  ]
+}
