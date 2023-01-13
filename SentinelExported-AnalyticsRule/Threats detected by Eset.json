@@ -1,0 +1,80 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/eb68e7af-1e04-45c3-985f-76e076002f57')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/eb68e7af-1e04-45c3-985f-76e076002f57')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2022-09-01-preview",
+      "properties": {
+        "queryFrequency": "PT5M",
+        "queryPeriod": "PT5M",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "severity": "Low",
+        "query": "eset_CL\n| where event_type_s == \"Threat_Event\"\n| extend HostCustomEntity = hostname_s, AccountCustomEntity = username_s, IPCustomEntity = ipv4_s\n",
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5M",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "entityMappings": [
+          {
+            "entityType": "Account",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "AccountCustomEntity"
+              }
+            ]
+          },
+          {
+            "entityType": "Host",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "HostCustomEntity"
+              }
+            ]
+          },
+          {
+            "entityType": "IP",
+            "fieldMappings": [
+              {
+                "identifier": "Address",
+                "columnName": "IPCustomEntity"
+              }
+            ]
+          }
+        ],
+        "tactics": [
+          "Execution",
+          "CredentialAccess",
+          "PrivilegeEscalation"
+        ],
+        "techniques": null,
+        "displayName": "Threats detected by Eset",
+        "enabled": false,
+        "description": "Escalates threats detected by Eset.",
+        "alertRuleTemplateName": "2d8a60aa-c15e-442e-9ce3-ee924889d2a6",
+        "lastModifiedUtc": "2022-07-07T18:18:55.0478408Z"
+      }
+    }
+  ]
+}
