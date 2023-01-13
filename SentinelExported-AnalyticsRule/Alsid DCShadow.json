@@ -1,0 +1,49 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/534eed88-50e6-4584-a8f0-c245d16537e9')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/534eed88-50e6-4584-a8f0-c245d16537e9')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2022-09-01-preview",
+      "properties": {
+        "queryFrequency": "PT2H",
+        "queryPeriod": "PT2H",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "severity": "High",
+        "query": "afad_parser\n| where MessageType == 2 and Codename == \"DCShadow\"\n",
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5M",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "tactics": [
+          "DefenseEvasion"
+        ],
+        "techniques": null,
+        "displayName": "Alsid DCShadow",
+        "enabled": false,
+        "description": "Searches for DCShadow attacks",
+        "alertRuleTemplateName": "25e0b2dd-3ad3-4d5b-80dd-720f4ef0f12c",
+        "lastModifiedUtc": "2022-07-07T18:08:34.1810256Z"
+      }
+    }
+  ]
+}
