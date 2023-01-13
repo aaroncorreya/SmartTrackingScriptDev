@@ -1,0 +1,69 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/e6926bd2-1c73-494e-b193-b5853be6b838')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/e6926bd2-1c73-494e-b193-b5853be6b838')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2022-09-01-preview",
+      "properties": {
+        "queryFrequency": "PT1H",
+        "queryPeriod": "PT1H",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "severity": "Medium",
+        "query": "\nlet threshold = 15;\nSymantecVIP\n| where isnotempty(RADIUSAuth)\n| where RADIUSAuth =~ \"Reject\"\n| summarize Total = count() by bin(TimeGenerated, 15m), User, ClientIP\n| where Total > threshold\n| extend timestamp = TimeGenerated, IPCustomEntity = ClientIP, AccountCustomEntity = User\n",
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5M",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "entityMappings": [
+          {
+            "entityType": "Account",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "AccountCustomEntity"
+              }
+            ]
+          },
+          {
+            "entityType": "IP",
+            "fieldMappings": [
+              {
+                "identifier": "Address",
+                "columnName": "IPCustomEntity"
+              }
+            ]
+          }
+        ],
+        "tactics": [
+          "CredentialAccess"
+        ],
+        "techniques": null,
+        "displayName": "Excessive Failed Authentication from Invalid Inputs",
+        "enabled": false,
+        "description": "Creates an incident in the event that a user generates an excessive amount of failed authentications due to invalid inputs, indications of a potential brute force.",
+        "alertRuleTemplateName": "c775a46b-21b1-46d7-afa6-37e3e577a27b",
+        "lastModifiedUtc": "2022-07-07T18:20:25.231417Z"
+      }
+    }
+  ]
+}
