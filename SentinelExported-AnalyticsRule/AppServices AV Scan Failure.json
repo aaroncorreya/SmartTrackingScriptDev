@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/6a14a7a3-8278-47a8-b17a-2f9f1571362c')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/6a14a7a3-8278-47a8-b17a-2f9f1571362c')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2022-09-01-preview",
+      "properties": {
+        "queryFrequency": "P1D",
+        "queryPeriod": "P1D",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 1,
+        "severity": "Informational",
+        "query": "\nlet timeframe = ago(1d);\nAppServiceAntivirusScanAuditLogs\n| where ScanStatus == \"Failed\"\n| extend HostCustomEntity = _ResourceId, timestamp = TimeGenerated\n",
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5M",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "entityMappings": [
+          {
+            "entityType": "Host",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "HostCustomEntity"
+              }
+            ]
+          }
+        ],
+        "tactics": null,
+        "techniques": null,
+        "displayName": "AppServices AV Scan Failure",
+        "enabled": false,
+        "description": "Identifies if an AV scan fails in Azure App Services.",
+        "alertRuleTemplateName": "c2da1106-bfe4-4a63-bf14-5ab73130ccd5",
+        "lastModifiedUtc": "2022-07-07T17:39:36.4663825Z"
+      }
+    }
+  ]
+}
