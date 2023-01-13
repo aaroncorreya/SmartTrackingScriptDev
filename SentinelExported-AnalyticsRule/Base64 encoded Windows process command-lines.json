@@ -1,0 +1,70 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/6be5f005-18ec-4034-8f0d-13b8ce42b11a')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/6be5f005-18ec-4034-8f0d-13b8ce42b11a')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2022-09-01-preview",
+      "properties": {
+        "queryFrequency": "P1D",
+        "queryPeriod": "P1D",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "severity": "Medium",
+        "query": "\nlet ProcessCreationEvents=() {\nlet processEvents=SecurityEvent\n| where EventID==4688\n| where isnotempty(CommandLine)\n| summarize StartTimeUtc = min(TimeGenerated), EndTimeUtc = max(TimeGenerated), count() by Computer, Account = SubjectUserName, AccountDomain = SubjectDomainName,\nFileName = Process, CommandLine, ParentProcessName;\nprocessEvents};\nProcessCreationEvents\n| where CommandLine contains \"TVqQAAMAAAAEAAA\"\n| extend timestamp = StartTimeUtc, AccountCustomEntity = Account, HostCustomEntity = Computer\n",
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5M",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "entityMappings": [
+          {
+            "entityType": "Account",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "AccountCustomEntity"
+              }
+            ]
+          },
+          {
+            "entityType": "Host",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "HostCustomEntity"
+              }
+            ]
+          }
+        ],
+        "tactics": [
+          "Execution",
+          "DefenseEvasion"
+        ],
+        "techniques": null,
+        "displayName": "Base64 encoded Windows process command-lines",
+        "enabled": false,
+        "description": "Identifies instances of a base64 encoded PE file header seen in the process command line parameter.",
+        "alertRuleTemplateName": "ca67c83e-7fff-4127-a3e3-1af66d6d4cad",
+        "lastModifiedUtc": "2022-07-07T17:49:53.1169151Z"
+      }
+    }
+  ]
+}
