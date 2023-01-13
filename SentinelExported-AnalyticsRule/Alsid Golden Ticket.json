@@ -1,0 +1,49 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/c6b7994e-ae58-499c-bdac-a7035e8858de')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/c6b7994e-ae58-499c-bdac-a7035e8858de')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2022-09-01-preview",
+      "properties": {
+        "queryFrequency": "PT2H",
+        "queryPeriod": "PT2H",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "severity": "High",
+        "query": "afad_parser\n| where MessageType == 2 and Codename == \"Golden Ticket\"\n",
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5M",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "tactics": [
+          "CredentialAccess"
+        ],
+        "techniques": null,
+        "displayName": "Alsid Golden Ticket",
+        "enabled": false,
+        "description": "Searches for Golden Ticket attacks",
+        "alertRuleTemplateName": "21ab3f52-6d79-47e3-97f8-ad65f2cb29fb",
+        "lastModifiedUtc": "2022-07-07T18:29:52.8341317Z"
+      }
+    }
+  ]
+}
