@@ -1,0 +1,78 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/17cf26a4-edee-458d-a467-5933e8c1a1aa')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/17cf26a4-edee-458d-a467-5933e8c1a1aa')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2022-09-01-preview",
+      "properties": {
+        "queryFrequency": "P1D",
+        "queryPeriod": "P14D",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "severity": "Medium",
+        "query": "let lookback = 14d;\nlet timeframe = 1d;\nSecurityEvent\n| where TimeGenerated > ago(lookback) and TimeGenerated < ago(timeframe)\n| where EventID == 4688\n| where ParentProcessName has_any (\"umworkerprocess.exe\", \"UMService.exe\")\n| join kind=rightanti (\nSecurityEvent\n| where TimeGenerated > ago(timeframe)\n| where ParentProcessName has_any (\"umworkerprocess.exe\", \"UMService.exe\")\n| where EventID == 4688) on NewProcessName\n| extend timestamp = TimeGenerated, AccountCustomEntity = Account, HostCustomEntity = Computer, IPCustomEntity = IpAddress\n",
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5M",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "entityMappings": [
+          {
+            "entityType": "Account",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "AccountCustomEntity"
+              }
+            ]
+          },
+          {
+            "entityType": "Host",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "HostCustomEntity"
+              }
+            ]
+          },
+          {
+            "entityType": "IP",
+            "fieldMappings": [
+              {
+                "identifier": "Address",
+                "columnName": "IPCustomEntity"
+              }
+            ]
+          }
+        ],
+        "tactics": [
+          "InitialAccess"
+        ],
+        "techniques": null,
+        "displayName": "HAFNIUM New UM Service Child Process",
+        "enabled": false,
+        "description": "This query looks for new processes being spawned by the Exchange UM service where that process has not previously been observed before. \nReference: https://www.microsoft.com/security/blog/2021/03/02/hafnium-targeting-exchange-servers/",
+        "alertRuleTemplateName": "95a15f39-d9cc-4667-8cdd-58f3113691c9",
+        "lastModifiedUtc": "2022-07-07T18:31:26.0196771Z"
+      }
+    }
+  ]
+}
