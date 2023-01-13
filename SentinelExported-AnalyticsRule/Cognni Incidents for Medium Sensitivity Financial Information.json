@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/b674088a-825a-4b49-ad10-7ffa5d483059')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/b674088a-825a-4b49-ad10-7ffa5d483059')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2022-09-01-preview",
+      "properties": {
+        "queryFrequency": "PT5H",
+        "queryPeriod": "PT5H",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "severity": "Medium",
+        "query": "let mediumRisk = 2;\nlet financial = 'Financial Information';\nCognniIncidents_CL \n| where Severity == mediumRisk\n| where informationType_s == financial\n| where TimeGenerated >= ago(5h)\n| extend AccountCustomEntity = userId_s\n",
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5M",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "entityMappings": [
+          {
+            "entityType": "Account",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "AccountCustomEntity"
+              }
+            ]
+          }
+        ],
+        "tactics": [
+          "Collection"
+        ],
+        "techniques": null,
+        "displayName": "Cognni Incidents for Medium Sensitivity Financial Information",
+        "enabled": false,
+        "description": "Display incidents in which medium sensitive financial information was placed at risk by user sharing.",
+        "alertRuleTemplateName": "d29b1d66-d4d9-4be2-b607-63278fc4fe6b",
+        "lastModifiedUtc": "2022-07-07T18:03:39.9471216Z"
+      }
+    }
+  ]
+}
