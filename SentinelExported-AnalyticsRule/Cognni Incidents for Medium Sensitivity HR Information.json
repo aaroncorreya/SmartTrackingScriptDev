@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/fd536808-fae9-4fc6-b046-9cd28b7e9e19')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/fd536808-fae9-4fc6-b046-9cd28b7e9e19')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2022-09-01-preview",
+      "properties": {
+        "queryFrequency": "PT5H",
+        "queryPeriod": "PT5H",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "severity": "Medium",
+        "query": "let mediumRisk = 2;\nlet hr = 'HR Information';\nCognniIncidents_CL \n| where Severity == mediumRisk\n| where informationType_s == hr\n| where TimeGenerated >= ago(5h)\n| extend AccountCustomEntity = userId_s\n",
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5M",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "entityMappings": [
+          {
+            "entityType": "Account",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "AccountCustomEntity"
+              }
+            ]
+          }
+        ],
+        "tactics": [
+          "Collection"
+        ],
+        "techniques": null,
+        "displayName": "Cognni Incidents for Medium Sensitivity HR Information",
+        "enabled": false,
+        "description": "Display incidents in which medium sensitivity HR information was placed at risk by user sharing.",
+        "alertRuleTemplateName": "75ff4f7d-0564-4a55-8b25-a75be951cde3",
+        "lastModifiedUtc": "2022-07-07T18:04:31.8572024Z"
+      }
+    }
+  ]
+}
