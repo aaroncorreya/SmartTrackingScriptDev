@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/d7b90ebc-9243-4837-bc04-15808d6fffdf')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/d7b90ebc-9243-4837-bc04-15808d6fffdf')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2022-09-01-preview",
+      "properties": {
+        "queryFrequency": "PT1H",
+        "queryPeriod": "PT1H",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "severity": "Medium",
+        "query": "let threshold = 5000;\nimNetworkSession(eventresult='Failure')\n| summarize Count=count() by SrcIpAddr, bin(TimeGenerated,5m)\n| where Count > threshold\n| extend timestamp = TimeGenerated, IPCustomEntity = SrcIpAddr\n",
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5M",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "entityMappings": [
+          {
+            "entityType": "IP",
+            "fieldMappings": [
+              {
+                "identifier": "Address",
+                "columnName": "IPCustomEntity"
+              }
+            ]
+          }
+        ],
+        "tactics": [
+          "Impact"
+        ],
+        "techniques": null,
+        "displayName": "Excessive number of failed connections from a single source (ASIM Network Session schema)",
+        "enabled": false,
+        "description": "This rule identifies that a single source generates an excessive amount of failed connections. Modify the threshold to change the sensitivity of the rule: the higher the threshold, the less sensitive is the rule and less incidents will be generated.<br><br>This rule uses the [Advanced SIEM Information Model (ASIM)](https://aka.ms/AboutASIM) and supports any network session source that complies with ASIM. To use this Analytics Rule, [deploy the Advanced SIEM information Model (ASIM)](https://aka.ms/DeployASIM).",
+        "alertRuleTemplateName": "4902eddb-34f7-44a8-ac94-8486366e9494",
+        "lastModifiedUtc": "2022-07-07T18:20:03.0680918Z"
+      }
+    }
+  ]
+}
