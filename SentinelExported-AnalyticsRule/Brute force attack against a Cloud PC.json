@@ -1,0 +1,69 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/d0f2d4e0-35b8-44b5-a314-bd3858a4ee6a')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/d0f2d4e0-35b8-44b5-a314-bd3858a4ee6a')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2022-09-01-preview",
+      "properties": {
+        "queryFrequency": "P1D",
+        "queryPeriod": "P1D",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "severity": "Medium",
+        "query": "let failureCountThreshold = 5;\nlet successCountThreshold = 1;\nlet authenticationWindow = 20m;\nSigninLogs\n| extend OS = DeviceDetail.operatingSystem, Browser = DeviceDetail.browser\n| extend StatusCode = tostring(Status.errorCode), StatusDetails = tostring(Status.additionalDetails)\n| extend State = tostring(LocationDetails.state), City = tostring(LocationDetails.city)\n| where AppDisplayName =~ \"Windows Sign In\"\n// Split out failure versus non-failure types\n| extend FailureOrSuccess = iff(ResultType in (\"0\", \"50125\", \"50140\", \"70043\", \"70044\"), \"Success\", \"Failure\")\n| summarize StartTime = min(TimeGenerated), EndTime = max(TimeGenerated), IPAddress = makeset(IPAddress), makeset(OS), makeset(Browser), makeset(City), \nmakeset(ResultType), FailureCount = countif(FailureOrSuccess==\"Failure\"), SuccessCount = countif(FailureOrSuccess==\"Success\") \nby bin(TimeGenerated, authenticationWindow), UserDisplayName, UserPrincipalName, AppDisplayName\n| where FailureCount >= failureCountThreshold and SuccessCount >= successCountThreshold\n| mvexpand IPAddress\n| extend IPAddress = tostring(IPAddress)\n| extend timestamp = StartTime, AccountCustomEntity = UserPrincipalName, IPCustomEntity = IPAddress\n",
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5M",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "entityMappings": [
+          {
+            "entityType": "Account",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "AccountCustomEntity"
+              }
+            ]
+          },
+          {
+            "entityType": "IP",
+            "fieldMappings": [
+              {
+                "identifier": "Address",
+                "columnName": "IPCustomEntity"
+              }
+            ]
+          }
+        ],
+        "tactics": [
+          "CredentialAccess"
+        ],
+        "techniques": null,
+        "displayName": "Brute force attack against a Cloud PC",
+        "enabled": false,
+        "description": "Identifies evidence of brute force activity against a Windows 365 Cloud PC by highlighting multiple authentication failures and by a successful authentication within a given time window.",
+        "alertRuleTemplateName": "3fbc20a4-04c4-464e-8fcb-6667f53e4987",
+        "lastModifiedUtc": "2022-07-07T17:50:47.602146Z"
+      }
+    }
+  ]
+}
