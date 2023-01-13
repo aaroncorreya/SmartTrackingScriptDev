@@ -1,0 +1,78 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/6b67df71-a90e-424c-8725-e7f9574d716f')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/6b67df71-a90e-424c-8725-e7f9574d716f')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2022-09-01-preview",
+      "properties": {
+        "queryFrequency": "P1D",
+        "queryPeriod": "P14D",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "severity": "Medium",
+        "query": "let exchange_servers = (\nW3CIISLog\n| where TimeGenerated > ago(14d)\n| where sSiteName =~ \"Exchange Back End\"\n| summarize by Computer);\nW3CIISLog\n| where TimeGenerated > ago(1d)\n| where Computer in (exchange_servers)\n| where csUriQuery startswith \"t=\"\n| project-reorder TimeGenerated, Computer, csUriStem, csUriQuery, csUserName, csUserAgent, cIP\n| extend timestamp = TimeGenerated, AccountCustomEntity = csUserName, HostCustomEntity = Computer, IPCustomEntity = cIP\n",
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5M",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "entityMappings": [
+          {
+            "entityType": "Account",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "AccountCustomEntity"
+              }
+            ]
+          },
+          {
+            "entityType": "Host",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "HostCustomEntity"
+              }
+            ]
+          },
+          {
+            "entityType": "IP",
+            "fieldMappings": [
+              {
+                "identifier": "Address",
+                "columnName": "IPCustomEntity"
+              }
+            ]
+          }
+        ],
+        "tactics": [
+          "InitialAccess"
+        ],
+        "techniques": null,
+        "displayName": "HAFNIUM Suspicious Exchange Request",
+        "enabled": false,
+        "description": "This query looks for suspicious request patterns to Exchange servers that fit a pattern observed by HAFNIUM actors.\nThe same query can be run on HTTPProxy logs from on-premise hosted Exchange servers.\nReference: https://www.microsoft.com/security/blog/2021/03/02/hafnium-targeting-exchange-servers/",
+        "alertRuleTemplateName": "23005e87-2d3a-482b-b03d-edbebd1ae151",
+        "lastModifiedUtc": "2022-07-07T18:31:48.2292764Z"
+      }
+    }
+  ]
+}
