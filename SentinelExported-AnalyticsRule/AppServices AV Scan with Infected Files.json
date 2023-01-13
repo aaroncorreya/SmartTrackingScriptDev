@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/09171b34-9e5d-4554-8675-f564c77f739d')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/09171b34-9e5d-4554-8675-f564c77f739d')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2022-09-01-preview",
+      "properties": {
+        "queryFrequency": "P1D",
+        "queryPeriod": "P1D",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 1,
+        "severity": "Informational",
+        "query": "\nlet timeframe = ago(1d);\nAppServiceAntivirusScanAuditLogs\n| where NumberOfInfectedFiles > 0\n| extend HostCustomEntity = _ResourceId, timestamp = TimeGenerated\n",
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5M",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "entityMappings": [
+          {
+            "entityType": "Host",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "HostCustomEntity"
+              }
+            ]
+          }
+        ],
+        "tactics": null,
+        "techniques": null,
+        "displayName": "AppServices AV Scan with Infected Files",
+        "enabled": false,
+        "description": "Identifies if an AV scan finds infected files in Azure App Services.",
+        "alertRuleTemplateName": "9d0295ee-cb75-4f2c-9952-e5acfbb67036",
+        "lastModifiedUtc": "2022-07-07T17:39:55.9850927Z"
+      }
+    }
+  ]
+}
