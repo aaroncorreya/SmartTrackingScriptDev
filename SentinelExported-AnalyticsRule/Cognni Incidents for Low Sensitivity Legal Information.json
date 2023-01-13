@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/881f8a7b-1178-4f35-9b02-7fc5414ba7f8')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/881f8a7b-1178-4f35-9b02-7fc5414ba7f8')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2022-09-01-preview",
+      "properties": {
+        "queryFrequency": "PT5H",
+        "queryPeriod": "PT5H",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "severity": "Low",
+        "query": "let lowRisk = 1;\nlet legal = 'Legal Information';\nCognniIncidents_CL \n| where Severity == lowRisk\n| where informationType_s == legal\n| where TimeGenerated >= ago(5h)\n| extend AccountCustomEntity = userId_s\n",
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": false,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "PT5M",
+            "matchingMethod": "AllEntities",
+            "groupByEntities": [],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "entityMappings": [
+          {
+            "entityType": "Account",
+            "fieldMappings": [
+              {
+                "identifier": "FullName",
+                "columnName": "AccountCustomEntity"
+              }
+            ]
+          }
+        ],
+        "tactics": [
+          "Collection"
+        ],
+        "techniques": null,
+        "displayName": "Cognni Incidents for Low Sensitivity Legal Information",
+        "enabled": false,
+        "description": "Display incidents in which low sensitivity legal information was placed at risk by user sharing.",
+        "alertRuleTemplateName": "8374ec0f-d857-4c17-b1e7-93d11800f8fb",
+        "lastModifiedUtc": "2022-07-07T18:02:59.0006468Z"
+      }
+    }
+  ]
+}
